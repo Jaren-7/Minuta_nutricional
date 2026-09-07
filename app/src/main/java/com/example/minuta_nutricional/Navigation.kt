@@ -11,6 +11,7 @@ import com.example.minuta_nutricional.ui.screens.MinutaScreen
 import com.example.minuta_nutricional.ui.screens.RegistroScreen
 import com.example.minuta_nutricional.ui.screens.RecuperarPasswordScreen
 import com.example.minuta_nutricional.ui.screens.InicioScreen
+import com.example.minuta_nutricional.ui.screens.SplashScreen
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -21,8 +22,12 @@ fun Navegacion() {
 
     NavHost(
         navController = navController,
-        startDestination = "login"
+        startDestination = "splash"
     ) {
+
+        composable("splash") {
+            SplashScreen(navController)
+        }
 
         composable("login") {
             LoginScreen(navController)

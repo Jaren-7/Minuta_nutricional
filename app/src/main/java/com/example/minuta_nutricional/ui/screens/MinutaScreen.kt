@@ -30,6 +30,7 @@ import com.example.minuta_nutricional.data.Receta
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -104,7 +105,8 @@ fun MinutaScreen(navController: NavController) {
 
             Text(
                 text = "Recetas realizadas: ${recetasRealizadas.size} de ${recetas.size}",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
             )
 
             TextButton(

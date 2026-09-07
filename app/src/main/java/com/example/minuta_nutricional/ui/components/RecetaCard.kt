@@ -32,7 +32,7 @@ fun RecetaCard(receta: Receta, realizada: Boolean, onRealizadaChange: (Boolean) 
         ) {
             Text(
                 text = receta.dia,
-                style = MaterialTheme.typography.labelLarge
+                style = MaterialTheme.typography.titleLarge
             )
             Text(
                 text = receta.nombre,

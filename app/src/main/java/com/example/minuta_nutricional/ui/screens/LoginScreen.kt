@@ -27,12 +27,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.minuta_nutricional.R
 import com.example.minuta_nutricional.data.usuarios
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -53,9 +60,15 @@ fun LoginScreen(navController: NavController) {
     val context = LocalContext.current
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center
+        modifier = Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Minuta Nutricional")
+       Image(
+           painter = painterResource(id = R.drawable.logo),
+           contentDescription = "Logo Minuta Nutricional",
+           modifier = Modifier.size(200.dp)
+       )
+
+        Text(text = "Minuta Nutricional", style = MaterialTheme.typography.titleLarge,fontWeight = FontWeight.Bold)
 
         Spacer(modifier = Modifier.height(24.dp))
 

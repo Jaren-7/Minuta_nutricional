@@ -122,11 +122,7 @@ fun LoginScreen(navController: NavController) {
                     it.password == password
                 }
 
-                if (usuarioEncontrado != null) {
-                    val tono = ToneGenerator(
-                        AudioManager.STREAM_NOTIFICATION,
-                        120
-                    )
+
 
                     tono.startTone(
                         ToneGenerator.TONE_PROP_ACK,

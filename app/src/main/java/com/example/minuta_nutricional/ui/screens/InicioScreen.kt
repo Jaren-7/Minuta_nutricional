@@ -34,6 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import com.example.minuta_nutricional.R
+import com.example.minuta_nutricional.ui.components.PanelCard
 import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -180,6 +182,14 @@ fun InicioScreen(navController: NavController) {
                 ) {
                     Text(text = "Ver minuta")
                 }
+
+                PanelCard(
+                    title = "Ver Minuta",
+                    imagen = R.drawable.logo,
+                    onClick = {
+                        navController.navigate("minuta")
+                    }
+                )
             }
 
         }

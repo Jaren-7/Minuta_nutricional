@@ -1,10 +1,8 @@
 package com.example.minuta_nutricional.ui.screens
 
 import android.annotation.SuppressLint
-import android.widget.RadioButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,71 +10,56 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.minuta_nutricional.ui.components.RecetaCard
-import com.example.minuta_nutricional.data.Receta
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
+import com.example.minuta_nutricional.modelos.recetas
+import com.example.minuta_nutricional.controlador.viewmodels.MinutaViewModel
+import com.example.minuta_nutricional.modelos.Receta
+import com.example.minuta_nutricional.ui.utils.orquestarOperacionSegura
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MinutaScreen(navController: NavController) {
+fun MinutaScreen(navController: NavController,viewModel: MinutaViewModel,tipoComidaFiltrada: String) {
 
-    val recetas = listOf(
-        Receta(
-            dia = "Lunes",
-            nombre = "Pollo con arroz",
-            descripcion = "Pollo a la plancha acompañado de arroz y ensalada.",
-            recomendacionNutricional = "Incluir verduras variadas y preferir agua como bebida."
-        ),
-        Receta(
-            dia = "Martes",
-            nombre = "Lentejas con verduras",
-            descripcion = "Lentejas acompañadas de verduras frescas.",
-            recomendacionNutricional = "Las legumbres aportan proteínas y fibra."
-        ),
-        Receta(
-            dia = "Miércoles",
-            nombre = "Pescado al horno",
-            descripcion = "Pescado al horno acompañado de papas y ensalada.",
-            recomendacionNutricional = "Preferir preparaciones al horno y acompañar con verduras."
-        ),
-        Receta(
-            dia = "Jueves",
-            nombre = "Ensalada con pollo",
-            descripcion = "Ensalada variada con pollo a la plancha.",
-            recomendacionNutricional = "Incorporar diferentes tipos de verduras."
-        ),
-        Receta(
-            dia = "Viernes",
-            nombre = "Tortilla de verduras",
-            descripcion = "Tortilla preparada con verduras variadas.",
-            recomendacionNutricional = "Acompañar con una porción de verduras frescas."
-        )
-    )
+    // Accesibilidad auditiva: motor de vibracion del telefono
+    val hapticFeedback = LocalHapticFeedback.current
 
-    var recetasRealizadas by remember {
-        mutableStateOf(setOf<String>())
-    }
+    val recetasRealizadas by viewModel.recetasRealizadas
 
-    var tipoComida by remember {
-        mutableStateOf("Almuerzo")
+    // Estado para capturar cualquier mensaje si falla la gestion de excepciones
+    var errorDeCarga by remember { mutableStateOf<String?>(null) }
+
+    // Estado para almacenar de forma persistente la lista resultante
+    var recetasFiltradas by remember { mutableStateOf(listOf<Receta>()) }
+
+    // FUNCION DE ORDEN SUPERIOR SE ENVIA UNA LAMBDA
+    // Se invoca la funcion inline protectora pasandole un bloque entre llaves {}
+    orquestarOperacionSegura(
+        onError = {mensaje -> errorDeCarga = mensaje}
+    ) {
+        // LAMBDA + FILTER SOBRE COLECCIONES = FILTRO Y COLECCION FILTRADA
+        recetasFiltradas = recetas.filter { receta ->
+            receta.tipoComida.lowercase() == tipoComidaFiltrada.lowercase()
+        }
     }
 
     Scaffold(
@@ -91,77 +74,35 @@ fun MinutaScreen(navController: NavController) {
                 )
             )
         }
-    ) {
+    ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(paddingValues)
+                .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.Center
         ) {
 
-            Spacer(
-                modifier = Modifier.height(100.dp)
-            )
+            // Si el try-catch captura un error, se muestra en la pantalla
+            errorDeCarga?.let { msg ->
+                Text(text = "⚠ Aviso: $msg", color = Color.Red, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
             Text(
                 text = "Recetas realizadas: ${recetasRealizadas.size} de ${recetas.size}",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 16.dp)
             )
 
-            TextButton(
+            Button(
                 onClick = { navController.popBackStack()},
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
             ) {
                 Text("Volver")
-            }
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-            Text(
-                text = "Tipo de comida",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(
-                    selected = tipoComida == "Desayuno",
-                    onClick = {
-                        tipoComida = "Desayuno"
-                    }
-                )
-
-                Text("Desayuno")
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(
-                    selected = tipoComida == "Almuerzo",
-                    onClick = {
-                        tipoComida = "Almuerzo"
-                    }
-                )
-
-                Text("Almuerzo")
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(
-                    selected = tipoComida == "Cena",
-                    onClick = {
-                        tipoComida = "Cena"
-                    }
-                )
-
-                Text("Cena")
             }
 
             Spacer(
@@ -169,22 +110,24 @@ fun MinutaScreen(navController: NavController) {
             )
 
             LazyColumn {
-                items(recetas) { receta ->
+                items(recetasFiltradas) { receta ->
 
-                    val realizada = recetasRealizadas.contains(receta.dia)
+                    val realizada = recetasRealizadas.contains(receta.id)
 
-                    RecetaCard(
-                        receta = receta,
-                        realizada = realizada,
-                        onRealizadaChange = { nuevaRealizada ->
-                            recetasRealizadas =
-                                if (nuevaRealizada) {
-                                    recetasRealizadas + receta.dia
-                                } else {
-                                    recetasRealizadas - receta.dia
-                                }
-                        }
-                    )
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        RecetaCard(
+                            receta = receta,
+                            realizada = realizada,
+                            onRealizadaChange = { nuevaRealizada ->
+
+                                // ALERTA HAPTICA: Emite una vibracion fisica sutil confirmando el toque
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+
+                                viewModel.onRecetaRealizadasChanged(receta.id,nuevaRealizada)
+                            }
+                        )
+
+                    }
 
                 }
             }

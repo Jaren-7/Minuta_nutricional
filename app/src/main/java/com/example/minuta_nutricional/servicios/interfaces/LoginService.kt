@@ -1,4 +1,4 @@
-package com.example.minuta_nutricional.domain.interfaces
+package com.example.minuta_nutricional.servicios.interfaces
 
 sealed class LoginValidationResult {
     object Valid : LoginValidationResult()

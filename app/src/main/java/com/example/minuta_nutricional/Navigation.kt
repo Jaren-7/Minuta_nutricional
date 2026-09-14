@@ -3,15 +3,18 @@ package com.example.minuta_nutricional
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.minuta_nutricional.ui.screens.LoginScreen
-import com.example.minuta_nutricional.ui.screens.MinutaScreen
-import com.example.minuta_nutricional.ui.screens.RegistroScreen
-import com.example.minuta_nutricional.ui.screens.RecuperarPasswordScreen
-import com.example.minuta_nutricional.ui.screens.InicioScreen
-import com.example.minuta_nutricional.ui.screens.SplashScreen
+import androidx.navigation.navArgument
+import com.example.minuta_nutricional.servicios.AuthSession
+import com.example.minuta_nutricional.servicios.impl.LoginServiceImpl
+import com.example.minuta_nutricional.controlador.viewmodels.LoginViewModel
+import com.example.minuta_nutricional.controlador.viewmodels.MinutaViewModel
+import com.example.minuta_nutricional.ui.screens.*
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -19,6 +22,11 @@ import com.example.minuta_nutricional.ui.screens.SplashScreen
 fun Navegacion() {
 
     val navController = rememberNavController()
+
+    val loginService = LoginServiceImpl()
+    val loginViewModel = remember { LoginViewModel(loginService) }
+
+    val minutaViewModel = remember { MinutaViewModel() }
 
     NavHost(
         navController = navController,
@@ -30,7 +38,20 @@ fun Navegacion() {
         }
 
         composable("login") {
-            LoginScreen(navController)
+            LoginScreen(
+                viewModel = loginViewModel,
+                onLoginSuccess = {
+                    navController.navigate("inicio") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onNavigateToRegistro = {
+                    navController.navigate("registro")
+                },
+                onNavigateToRecuperar= {
+                    navController.navigate("recuperar")
+                }
+            )
         }
 
         composable("registro") {
@@ -41,12 +62,32 @@ fun Navegacion() {
             RecuperarPasswordScreen(navController)
         }
 
-        composable("minuta") {
-            MinutaScreen(navController)
+        composable(
+            route = "minuta/{tipoComida}",
+            arguments = listOf(navArgument("tipoComida") {type = NavType.StringType})
+        )
+        { backStackEntry ->
+
+            val tipo = backStackEntry.arguments?.getString("tipoComida") ?: ""
+
+            MinutaScreen(
+                navController,
+                tipoComidaFiltrada = tipo,
+                viewModel = minutaViewModel,
+                )
         }
 
         composable("inicio") {
-            InicioScreen(navController)
+            if (!AuthSession.estaActivo()) {
+                LaunchedEffect(Unit) {
+                    navController.navigate("login") {
+                        popUpTo("inicio") { inclusive = true }
+                    }
+                }
+            } else {
+
+                InicioScreen(navController)
+            }
         }
     }
 }

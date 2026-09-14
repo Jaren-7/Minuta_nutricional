@@ -1,11 +1,6 @@
 package com.example.minuta_nutricional.ui.screens
 
-import android.content.Context
-import android.media.AudioManager
-import android.media.ToneGenerator
 import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,18 +27,29 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.example.minuta_nutricional.R
-import com.example.minuta_nutricional.data.usuarios
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import com.example.minuta_nutricional.controlador.viewmodels.LoginViewModel
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(
+    viewModel: LoginViewModel,
+    onLoginSuccess: () -> Unit,
+    onNavigateToRegistro: () -> Unit,
+    onNavigateToRecuperar: () -> Unit
+
+) {
 
     var usuario by remember {
         mutableStateOf("")
@@ -53,11 +59,17 @@ fun LoginScreen(navController: NavController) {
         mutableStateOf("")
     }
 
-    var mensajeError by remember {
-        mutableStateOf("")
-    }
+    val mensajeError by viewModel.errorMessage
 
-    val context = LocalContext.current
+    // Administrador de vibracion haptica
+    val hapticFeedback = LocalHapticFeedback.current
+
+    // Alerta Haptica: Si hay un error, el telefono vibra de inmediato
+    LaunchedEffect(mensajeError) {
+        if (mensajeError != null) {
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
@@ -72,6 +84,7 @@ fun LoginScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Alerta Visual: isError si falla el login el contorno cambia a rojo
         OutlinedTextField(
             value = usuario,
             onValueChange = {
@@ -80,9 +93,11 @@ fun LoginScreen(navController: NavController) {
             label = {
                 Text("Usuario")
             },
+            isError = mensajeError != null,
             modifier = Modifier.fillMaxWidth()
         )
 
+        // Alerta Visual: isError tambien en la contraseña
         OutlinedTextField(
             value = password,
             onValueChange = {
@@ -95,19 +110,29 @@ fun LoginScreen(navController: NavController) {
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password
             ),
+            isError = mensajeError != null,
             modifier = Modifier.fillMaxWidth()
         )
 
-        if (mensajeError.isNotEmpty()) {
+        // Alerta Visual y de Icono
+        mensajeError?.let { error ->
             Spacer(
-                modifier = Modifier.height(12.dp)
+                modifier = Modifier.height(16.dp)
             )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = "⚠", fontSize = 32.sp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
-            Text(
-                text = mensajeError,
-                color = MaterialTheme.colorScheme.error,
-                fontSize = 20.sp
-            )
         }
 
         Spacer(
@@ -116,32 +141,7 @@ fun LoginScreen(navController: NavController) {
 
         Button(
             onClick = {
-
-                val usuarioEncontrado = usuarios.find {
-                    it.usuario == usuario &&
-                    it.password == password
-                }
-
-
-
-                    tono.startTone(
-                        ToneGenerator.TONE_PROP_ACK,
-                        300
-                    )
-
-                    navController.navigate("inicio")
-                } else {
-                    val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-
-                    vibrator.vibrate(
-                        VibrationEffect.createOneShot(
-                            300,
-                            VibrationEffect.DEFAULT_AMPLITUDE
-                        )
-                    )
-                    mensajeError = "*Usuario o contraseña incorrectos"
-                }
-
+                viewModel.onLoginClicked(usuario,password, onSuccessNavigate = onLoginSuccess)
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -153,14 +153,14 @@ fun LoginScreen(navController: NavController) {
         )
 
         TextButton(
-            onClick = { navController.navigate("registro")},
+            onClick =  onNavigateToRegistro,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Crear una cuenta")
         }
 
         TextButton(
-            onClick = { navController.navigate("recuperar")},
+            onClick = onNavigateToRecuperar,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Recuperar contraseña")

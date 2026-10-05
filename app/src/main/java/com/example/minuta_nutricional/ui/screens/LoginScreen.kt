@@ -34,11 +34,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import com.example.minuta_nutricional.controlador.viewmodels.LoginViewModel
+import kotlinx.coroutines.launch
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -70,6 +72,8 @@ fun LoginScreen(
             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
         }
     }
+
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
@@ -141,7 +145,9 @@ fun LoginScreen(
 
         Button(
             onClick = {
-                viewModel.onLoginClicked(usuario,password, onSuccessNavigate = onLoginSuccess)
+                scope.launch {
+                    viewModel.onLoginClicked(usuario,password, onSuccessNavigate = onLoginSuccess)
+                }
             },
             modifier = Modifier.fillMaxWidth()
         ) {

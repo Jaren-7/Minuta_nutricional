@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -23,19 +24,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import com.example.minuta_nutricional.modelos.itemsMenu
+import com.example.minuta_nutricional.controlador.viewmodels.InicioViewModel
 import com.example.minuta_nutricional.servicios.AuthSession
 import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InicioScreen(navController: NavController) {
+fun InicioScreen(navController: NavController, viewModel: InicioViewModel) {
 
     val usuarioDatos = AuthSession.usuarioActual
     val nombreUsuario = usuarioDatos?.nombre?: "Usuario Invitado"
     val correoUsuario = usuarioDatos?.correo?: "sin.correo@correo.cl"
+
+    val itemsMenuDeBaseDatos by viewModel.menus
 
     val iniciales = nombreUsuario.split(" ")
         .mapNotNull { it.firstOrNull()?.toString() }
@@ -165,6 +167,21 @@ fun InicioScreen(navController: NavController) {
                         }
                     }
                 )
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        navController.navigate("crear_receta")
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Añadir receta personalizada"
+                    )
+                }
             }
         ) { paddingValues ->
             Column(
@@ -211,32 +228,13 @@ fun InicioScreen(navController: NavController) {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                /*
-                Button(
-                    onClick = { navController.navigate("minuta")},
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(text = "Ver minuta")
-                }
-
-                PanelCard(
-                    title = "Ver Minuta",
-                    imagen = R.drawable.logo,
-                    onClick = {
-                        navController.navigate("minuta")
-                    }
-                )
-
-
-                 */
-
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(itemsMenu) { item ->
+                    items(itemsMenuDeBaseDatos) { item ->
                         Card(
                             onClick = {
                                 // Alerta Haptica: Confirmacion fisica instantanea al presionar cualquier menu

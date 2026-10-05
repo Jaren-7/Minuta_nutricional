@@ -4,6 +4,7 @@
 
     <!-- Permiso para utilizar la vibracion -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -26,6 +27,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+<!--
+        <provider
+            android:name=".provider.RecetasContentProvider"
+            android:authorities="com.example.minuta_nutricional.recetas"
+            android:exported="false" />
+-->
+
     </application>
 
 </manifest>

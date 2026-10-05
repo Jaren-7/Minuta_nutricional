@@ -24,16 +24,17 @@ import com.example.minuta_nutricional.ui.components.RecetaCard
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
-import com.example.minuta_nutricional.modelos.recetas
 import com.example.minuta_nutricional.controlador.viewmodels.MinutaViewModel
 import com.example.minuta_nutricional.modelos.Receta
 import com.example.minuta_nutricional.ui.utils.orquestarOperacionSegura
+import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,7 +44,11 @@ fun MinutaScreen(navController: NavController,viewModel: MinutaViewModel,tipoCom
     // Accesibilidad auditiva: motor de vibracion del telefono
     val hapticFeedback = LocalHapticFeedback.current
 
+    val scope = rememberCoroutineScope()
+
     val recetasRealizadas by viewModel.recetasRealizadas
+
+    val recetas = viewModel.recetas.value
 
     // Estado para capturar cualquier mensaje si falla la gestion de excepciones
     var errorDeCarga by remember { mutableStateOf<String?>(null) }
@@ -54,85 +59,104 @@ fun MinutaScreen(navController: NavController,viewModel: MinutaViewModel,tipoCom
     // FUNCION DE ORDEN SUPERIOR SE ENVIA UNA LAMBDA
     // Se invoca la funcion inline protectora pasandole un bloque entre llaves {}
     orquestarOperacionSegura(
-        onError = {mensaje -> errorDeCarga = mensaje}
+        onError = { mensaje -> errorDeCarga = mensaje }
     ) {
-        // LAMBDA + FILTER SOBRE COLECCIONES = FILTRO Y COLECCION FILTRADA
-        recetasFiltradas = recetas.filter { receta ->
-            receta.tipoComida.lowercase() == tipoComidaFiltrada.lowercase()
+        recetasFiltradas = if (tipoComidaFiltrada.lowercase() == "minuta/mis_recetas" || tipoComidaFiltrada.lowercase() == "mis_recetas") {
+            recetas.filter { it.esPersonalizada }
+        } else {
+            // LAMBDA + FILTER SOBRE COLECCIONES = FILTRO Y COLECCION FILTRADA
+            recetas.filter { receta ->
+                receta.tipoComida.lowercase() == tipoComidaFiltrada.lowercase() && !receta.esPersonalizada
+            }
         }
-    }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text("Minuta Nutricional Semanal")
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text("Minuta Nutricional Semanal")
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 )
-            )
-        }
-    ) { paddingValues ->
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-
-            // Si el try-catch captura un error, se muestra en la pantalla
-            errorDeCarga?.let { msg ->
-                Text(text = "⚠ Aviso: $msg", color = Color.Red, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
             }
+        ) { paddingValues ->
 
-            Text(
-                text = "Recetas realizadas: ${recetasRealizadas.size} de ${recetas.size}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
-
-            Button(
-                onClick = { navController.popBackStack()},
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.Center
             ) {
-                Text("Volver")
-            }
 
-            Spacer(
-                modifier = Modifier.height(20.dp)
-            )
+                // Si el try-catch captura un error, se muestra en la pantalla
+                errorDeCarga?.let { msg ->
+                    Text(text = "⚠ Aviso: $msg", color = Color.Red, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
 
-            LazyColumn {
-                items(recetasFiltradas) { receta ->
+                Text(
+                    text = "Recetas realizadas: ${recetasRealizadas.size} de ${recetas.size}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
 
-                    val realizada = recetasRealizadas.contains(receta.id)
+                Button(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Text("Volver")
+                }
 
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        RecetaCard(
-                            receta = receta,
-                            realizada = realizada,
-                            onRealizadaChange = { nuevaRealizada ->
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
 
-                                // ALERTA HAPTICA: Emite una vibracion fisica sutil confirmando el toque
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                LazyColumn {
+                    items(recetasFiltradas) { receta ->
 
-                                viewModel.onRecetaRealizadasChanged(receta.id,nuevaRealizada)
-                            }
-                        )
+                        val realizada = recetasRealizadas.contains(receta.id)
+
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            RecetaCard(
+                                receta = receta,
+                                realizada = realizada,
+                                onRealizadaChange = { nuevaRealizada ->
+
+                                    // ALERTA HAPTICA: Emite una vibracion fisica sutil confirmando el toque
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+
+                                    viewModel.onRecetaRealizadasChanged(receta.id, nuevaRealizada)
+                                },
+                                onBorrarClick = {
+                                    // Micro-vibración háptica inclusiva de advertencia táctil
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+
+                                    scope.launch {
+                                        viewModel.borrarReceta(receta.id)
+                                    }
+                                },
+                                onEditarClick = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+
+                                    viewModel.recetaEditar = receta
+
+                                    navController.navigate("crear_receta")
+                                }
+                            )
+
+                        }
 
                     }
-
                 }
             }
         }
+
+
     }
-
-
 }
